@@ -1,5 +1,5 @@
-import { All, Body, Controller, Param, Req, Res } from '@nestjs/common';
-import { Request, Response } from 'express';
+import { All, Body, Controller, Param, Req } from '@nestjs/common';
+import { Request } from 'express';
 import { ProxyService } from './proxy.service';
 
 @Controller('proxy')
@@ -18,5 +18,18 @@ constructor(private readonly proxyService: ProxyService) {}
     const headers = req.headers;
 
     return this.proxyService.forwardRequest(service, path, method, query, body, headers);
+  }
+
+  @All(':service')
+  async forwardRequestNoPath(
+    @Param('service') service: string,
+    @Req() req: Request,
+    @Body() body: any,
+  ) {
+    const method = req.method;
+    const query = req.query;
+    const headers = req.headers;
+
+    return this.proxyService.forwardRequest(service, '', method, query, body, headers);
   }
 }

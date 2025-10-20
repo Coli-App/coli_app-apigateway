@@ -24,7 +24,7 @@ export class ProxyService {
 
     this.serviceUrls = {
       auth: authServiceUrl,
-      users: usersServiceUrl,
+      user: usersServiceUrl,
     };
   }
 
@@ -44,7 +44,17 @@ export class ProxyService {
       );
     }
 
-    const url = `${baseUrl}/${path}`;
+    const url = path ? `${baseUrl}/${path}` : baseUrl;
+
+    console.log(`Gateway redirection:`, {
+      service,
+      baseUrl,
+      path,
+      finalUrl: url,
+      method,
+      pathType: typeof path,
+      pathLength: Array.isArray(path) ? path.length : 'not array'
+    });
 
     try {
       const response = await firstValueFrom(
@@ -53,12 +63,31 @@ export class ProxyService {
           url,
           params: query,
           headers: this.filterHeaders(headers),
-          ...(Object.keys(data).length > 0 &&
+          ...(data && Object.keys(data).length > 0 &&
             !['GET', 'DELETE'].includes(method) && { data }),
         }),
       );
+      
+      console.log(`Proxy Success:`, {
+        status: response.status,
+        dataType: typeof response.data
+      });
+      
       return response.data;
     } catch (error) {
+      console.error(`Proxy Error:`, {
+        message: error.message,
+        isAxiosError: error instanceof AxiosError,
+        hasResponse: error.response ? true : false,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        responseData: error.response?.data,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method
+        }
+      });
+      
       if (error instanceof AxiosError && error.response) {
         throw new HttpException(error.response.data, error.response.status);
       }
