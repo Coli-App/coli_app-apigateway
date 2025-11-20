@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
 import { AxiosError } from 'axios';
+import FormData = require('form-data');
 
 @Injectable()
 export class ProxyService {
@@ -27,7 +28,7 @@ export class ProxyService {
     this.serviceUrls = {
       auth: authServiceUrl,
       user: usersServiceUrl,
-      space: spacesServiceUrl,
+      spaces: spacesServiceUrl,
       sports: sportsServiceUrl,
     };
   }
@@ -39,6 +40,7 @@ export class ProxyService {
     query: any,
     data?: any,
     headers?: Record<string, any>,
+    file?: Express.Multer.File,
   ) {
     const baseUrl = this.serviceUrls[service];
 
@@ -49,6 +51,54 @@ export class ProxyService {
     }
 
     const url = path ? `${baseUrl}/${path}` : baseUrl;
+
+    let requestHeaders = this.filterHeaders(headers);
+    let requestData = data;
+
+    if (file) {
+      const formData = new FormData();
+      
+      formData.append('image', file.buffer, {
+        filename: file.originalname,
+        contentType: file.mimetype,
+      });
+      
+      if (data) {
+        Object.keys(data).forEach(key => {
+          const value = data[key];
+          if (value !== undefined && value !== null) {
+            if (Array.isArray(value) || typeof value === 'object') {
+              formData.append(key, JSON.stringify(value));
+            } 
+            else {
+              formData.append(key, String(value));
+            }
+          }
+        });
+      }
+      
+      requestData = formData;
+      
+      const formHeaders = formData.getHeaders();
+      requestHeaders = {
+        ...requestHeaders,
+        ...formHeaders,
+      };
+      
+
+      delete requestHeaders['content-type'];
+      
+      console.log('FormData created with file:', file.originalname);
+    } else if (data && typeof data.getHeaders === 'function') {
+      const formHeaders = data.getHeaders();
+      
+      requestHeaders = {
+        ...requestHeaders,
+        ...formHeaders,
+      };
+
+      console.log('FormData Headers generated:', formHeaders);
+    }
 
     console.log(`Gateway redirection:`, {
       service,
@@ -66,9 +116,9 @@ export class ProxyService {
           method,
           url,
           params: query,
-          headers: this.filterHeaders(headers),
-          ...(data && Object.keys(data).length > 0 &&
-            !['GET', 'DELETE'].includes(method) && { data }),
+          headers: requestHeaders,
+          ...(requestData && Object.keys(requestData).length > 0 &&
+            !['GET', 'DELETE'].includes(method) && { data: requestData }),
         }),
       );
       
@@ -113,4 +163,4 @@ export class ProxyService {
 
     return filtered;
   }
-}
+} 
