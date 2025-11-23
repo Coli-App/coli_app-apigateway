@@ -1,4 +1,4 @@
-name: Build and deploy coliapp.auth-ms to Azure
+name: Build and deploy coliapp.apigateway to Azure
 
 on:
     push:
