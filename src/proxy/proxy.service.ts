@@ -50,7 +50,7 @@ export class ProxyService {
       );
     }
 
-    const url = path ? `${baseUrl}/${path}` : baseUrl;
+    const url = path ? `${baseUrl}/${Array.isArray(path) ? path.join('/') : path}` : baseUrl; 
 
     let requestHeaders = this.filterHeaders(headers);
     let requestData = data;
