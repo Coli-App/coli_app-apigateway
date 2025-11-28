@@ -18,8 +18,9 @@ export class ProxyService {
     const usersServiceUrl = process.env.USERS_SERVICE_URL;
     const spacesServiceUrl = process.env.SPACES_SERVICE_URL;
     const sportsServiceUrl = process.env.SPORTS_SERVICE_URL;
+    const bookingsServiceUrl = process.env.BOOKINGS_SERVICE_URL;
 
-    if (!authServiceUrl || !usersServiceUrl || !spacesServiceUrl || !sportsServiceUrl) {
+    if (!authServiceUrl || !usersServiceUrl || !spacesServiceUrl || !sportsServiceUrl || !bookingsServiceUrl) {
       throw new InternalServerErrorException(
         'Required service URL environment variables are not defined.',
       );
@@ -30,6 +31,7 @@ export class ProxyService {
       user: usersServiceUrl,
       spaces: spacesServiceUrl,
       sports: sportsServiceUrl,
+      bookings: bookingsServiceUrl,
     };
   }
 
